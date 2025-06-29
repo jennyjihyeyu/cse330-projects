@@ -1,0 +1,10 @@
+MariaDB [wustl]> SELECT students.first_name, students.last_name, students.id, grade from grades JOIN students ON students.id = grades.student_id WHERE grades.course_code = '330S';
+
++------------+-----------+-----+--------+
+| first_name | last_name | id  | grade  |
++------------+-----------+-----+--------+
+| Ben        | Harper    |  88 |  35.50 |
+| Marc       | Roberge   | 115 |  75.00 |
+| Matt       | Freeman   | 202 | 100.00 |
++------------+-----------+-----+--------
++
