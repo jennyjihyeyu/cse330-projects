@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Chat</title>
+   <style>
+      h1 {
+         text-align: center;
+         font-family: Snell Roundhand, Bradley Hand;
+         position: absolute;
+         color: lightsalmon;
+      }
+
+      body {
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         justify-content: space-between;
+         background-color: black;
+         min-height: 100vh;
+         margin: 0;
+         position: relative;
+      }
+
+      #createRoom,
+      #status,
+      #menu,
+      #message,
+      .other-users,
+      .other-container {
+         font-size: 15px;
+         font-family: Optima, Gill Sans;
+         color: lightsalmon;
+         border: 2px solid lightsalmon;
+         ;
+         padding: 10px;
+         align-items: flex-start
+      }
+
+      #createRoom,
+      #menu,
+      #message {
+         margin-bottom: 20px;
+      }
+
+      #right {
+         position: absolute;
+         display: flex;
+         flex-direction: column;
+         top: 0;
+         right: 0;
+         width: 20%;
+      }
+
+      #status,
+      .other-users,
+      .other-container {
+         margin-bottom: 20px;
+      }
+
+      #middle {
+         position: absolute;
+         display: flex;
+         flex-direction: column;
+         top: 50%;
+         right: 50%;
+         width: 20%;
+         color: white;
+         align-items: center;
+         transform: translate(50%, -50%);
+      }
+
+      #chat_history,
+      #chat_private,
+      #invitations {
+         margin-bottom: 20px;
+      }
+
+      #container {
+         width: 20%;
+         position: absolute;
+         display: flex;
+         flex-direction: column;
+         top: 0;
+         left: 0;
+      }
+
+      .content {
+         flex-grow: 1;
+         width: 100%;
+         padding: 10px;
+      }
+   </style>
+   <script src="/socket.io/socket.io.js"></script>
+   <link rel="stylesheet" type="text/css" href="style.css" />
+   <script src="http://code.jquery.com/jquery-latest.js"></script>
+   <script>
+
+      var socketio = io.connect();
+
+      socketio.on('connect', function () { //starting 
+         socketio.emit('defineUser', prompt("What is your username?"));
+      });
+
+      socketio.on("clear", function (data) { 
+         document.getElementById("status").innerHTML += "<strong> " + data + "</strong> <br> <br>";
+      });
+
+      socketio.on("change_room", function (data) {
+         document.getElementById("cur_room").innerHTML = "<div id = 'cur_room'> Current Room: " + data + "</div>";
+         document.getElementById("chat_private").innerHTML = "";
+         document.getElementById("msg_send").style.display = 'inline';
+         document.getElementById("pm-cont").style.display = 'inline';
+      })
+
+
+      socketio.on("update_user", function (data) {
+         document.getElementById("users_inlist").innerHTML = "<div id = 'users_inlist'>" + data + "</div>";
+
+      })
+
+
+      socketio.on("update_room", function(data){
+         let rooms = data.rooms;
+         let privateArr = data.privateArr;
+         document.getElementById("rooms").innerHTML = "";
+         for(let i = 0; i < rooms.length; i++){
+            $("#rooms").append('<button class = "rooms" onclick = "joinRoom(\''+rooms[i]+'\')">' + rooms[i] + '</button> <br> <br> ');     
+         }
+         
+         document.getElementById("privaterooms").innerHTML = "";
+         for(let i = 0; i < privateArr.length; i++) {
+               $("#privaterooms").append('<button class = "rooms" onclick = "password_check(\'' + privateArr[i] + '\')">' + privateArr[i] + '</button> <br> <br> ');
+         }
+      })
+
+      socketio.on("client_message", function (data) {
+         document.getElementById("chat_history").appendChild(document.createElement("hr"));
+         document.getElementById("chat_history").appendChild(document.createTextNode(data["user"] + ": " + data['message']));
+      });
+
+      socketio.on("client_anonymous", function (data) {
+         document.getElementById("chat_history").appendChild(document.createElement("hr"));
+         document.getElementById("chat_history").appendChild(document.createTextNode("Anonymous: " + data['message']));
+      });
+
+      socketio.on("client_private_message", function (data) {
+         document.getElementById("chat_private").innerHTML += "<div id='chat_private'>" + data["pm_from"] + " sent private message: " + data["pm"] + "</div>";
+      })
+
+      socketio.on("room_list", function (data) {
+         document.getElementById("rooms").innerHTML = "";
+         for (let i = 0; i < data.length; i++) {
+            $("#rooms").append('<button class = "rooms" onclick = "joinRoom(\'' + data[i] + '\')">' + data[i] + '</button> <br> <br> ');
+         }
+      })
+
+      socketio.on("private_room_list", function (data) {
+         document.getElementById("privaterooms").innerHTML = "";
+         for (let i = 0; i < data.length; i++) {
+            $("#privaterooms").append('<button class = "rooms" onclick = "password_check(\'' + data[i] + '\')">' + data[i] + '</button> <br> <br> ');
+         }
+      })
+
+      socketio.on("client_invite", function (data) { //invites
+         $("#invites").append('<p>' + data["from"] + " sent an invitation to join room " + data["room"]);
+
+         //accept
+         $("#invite_accept").append('<button class = "ic" onclick = "joinRoom(\'' + data["room"] + '\')"> Yes </button> <br> ');
+
+         //decline
+         $("#invite_decline").append('<button class = "ic" onclick = "declineRoom(\'' + data["room"] + '\')"> No </button> <br> ');
+      })
+
+      socketio.on("owner_only", function (data) { //only allow room owner for certain rights
+         alert("Only creater of the room are allowed.")
+      })
+
+      socketio.on("self_ban", function (data) { //prevent self-ban (creative portion) 
+         alert("Self-ban is not possible.")
+      })
+
+      socketio.on("client_kick", function (data) {
+
+         if (data["from"] === data["creator"]) {
+            joinRoom(data["sendto"]);
+            alert("You got kicked out from " + data["room"]);
+         } else {
+            alert("Someone tried to kicked you out from " + data["room"]);
+         }
+      })
+
+      socketio.on("client_ban", function (data) {
+         joinRoom(data["sendto"]);
+         alert("Banned from" + data['rn'] + ".");
+      })
+
+      socketio.on("client_ban_join", function (data) {
+         alert("Banned from" + data['rn'] + ".");
+      })
+
+      socketio.on("incorrect_password", function () {
+         alert("Incorrect password");
+      })
+
+      function password_check(rn) {
+         socketio.emit('password_check', { pwd: prompt("Password Required"), roomname: rn });
+      }
+
+      function createRoom() {
+         let rn = document.getElementById("public_roomname").value;
+
+         document.getElementById("public_roomname").value = "";
+         socketio.emit("server_roomname", { roomname: rn });
+      }
+
+      function createPrivateRoom() {
+         let privrn = document.getElementById("private_roomname").value;
+         let pwd = document.getElementById("private_password").value;
+
+         document.getElementById("private_roomname").value = "";
+         document.getElementById("private_password").value = "";
+         socketio.emit("server_privateroom", { privroomname: privrn, privpwd: pwd });
+      }
+
+      function sendMessage() {
+         var msg = document.getElementById("message_input").value;
+
+         document.getElementById("message_input").value = "";
+         socketio.emit("server_message", { message: msg });
+      }
+
+      function sendMessageAnonymous() {
+         var msg = document.getElementById("message_input").value;
+
+         document.getElementById("message_input").value = "";
+         socketio.emit("server_anonymous", { message: msg });
+      }
+
+      function sendPrivate() {
+         let pm = document.getElementById("pm").value;
+         let pm_to = document.getElementById("pm_to").value;
+
+         document.getElementById("pm").value = "";
+         document.getElementById("pm_to").value = "";
+         socketio.emit("server_private_message", { pm: pm, pm_to: pm_to });
+      }
+
+      function kickUser() {
+         let kickeduser = document.getElementById("kicked_user").value;
+         let room = document.getElementById("kicked_room").value;
+
+         document.getElementById("kicked_user").value = "";
+         document.getElementById("kicked_room").value = "";
+         socketio.emit("kickuser", { kickeduser: kickeduser, room: room });
+      }
+
+      function banUser() {
+         let banneduser = document.getElementById("banned_user").value;
+         let room = document.getElementById("banned_room").value;
+
+         document.getElementById("banned_user").value = "";
+         document.getElementById("banned_room").value = "";
+         socketio.emit("banuser", { banneduser: banneduser, room: room });
+      }
+
+      function sendInvite() {
+         let to = document.getElementById("invite_to").value;
+         let room = document.getElementById("invite_room").value;
+
+         document.getElementById("invite_to").value = "";
+         document.getElementById("invite_room").value = "";
+         socketio.emit("server_invite", { to: to, room: room });
+      }
+
+      function joinRoom(rn) {
+         $("#chat_history").empty();
+         if (rn == "lobby") {
+            document.getElementById("msg_send").style.display = 'none';
+            document.getElementById("pm-cont").style.display = 'none';
+
+         }
+         else {
+            document.getElementById("msg_send").style.display = 'inline';
+            document.getElementById("pm-cont").style.display = 'inline';
+
+         }
+         $("#invitations").empty();
+         $("#invites").empty();
+         $("#invite_accept").empty();
+         $("#invite_decline").empty();
+         socketio.emit("server_joinRoom", { roomname: rn });
+      }
+
+      function declineRoom(rn) {
+         alert("denied invitation");
+         $("#invitations").empty();
+         $("#invites").empty();
+         $("#invite_accept").empty();
+         $("#invite_decline").empty();
+      }
+
+   </script>
+</head>
+
+<body>
+   <h1>WashU Chat</h1>
+
+   <div id="container">
+      <div id="createRoom">
+         Create Room: <br>
+
+         Public: <br>
+         <input type="text" id="public_roomname" placeholder="Public Room Name">
+         <button onclick="createRoom()"> Create</button> <br><br>
+
+         Private:<br>
+         <input type="text" id="private_roomname" placeholder="Private Room Name">
+         <input type="password" id="private_password" placeholder="Password">
+         <button onclick="createPrivateRoom()"> Create</button>
+      </div>
+
+      <div id="menu">
+         Kick: (For Users in the Room) <br>
+         <input type="text" id="kicked_user" placeholder="User to Kick" />
+         <input type="text" id="kicked_room" placeholder="Choose Room" />
+         <button onclick="kickUser()"> Kick </button> <br><br>
+
+         Ban: (For Users in the Room) <br>
+         <input type="text" id="banned_user" placeholder="User to ban (owner only)" />
+         <input type="text" id="banned_room" placeholder="Choose Room" />
+         <button onclick="banUser()"> Ban </button> <br><br>
+
+         Invite (For Public Room & First-Time Entering Only):<br>
+
+         <input type="text" id="invite_to" placeholder="Send invite to.." />
+         <input type="text" id="invite_room" placeholder="Choose Room" />
+         <button onclick="sendInvite()"> Invite </button>
+      </div>
+
+      <div id="message">
+         <div id="msg_send">
+            Send Message: <br>
+            <input type="text" id="message_input" placeholder="Send Message Here" />
+            <button onclick="sendMessage()">send</button>
+            <button onclick="sendMessageAnonymous()"> anonymous send </button> <br><br>
+         </div>
+
+         <div id="pm-cont" class="priv_msg_container">
+            Send Private Message:<br>
+            <input type="text" id="pm_to" placeholder="Private Message Here" />
+            <input type="text" id="pm" placeholder="Message Here" />
+            <button onclick="sendPrivate()"> send</button>
+         </div>
+      </div>
+
+   </div>
+
+   <div id="middle">
+      <div id="chat_history"></div> <br>
+      <div id="chat_private"></div> <br>
+
+      <div id="invitations">
+         <div id="invites"></div>
+         <div id="invite_accept"></div>
+         <div id="invite_decline"></div>
+      </div>
+   </div>
+
+
+   <div id="right">
+      <div id="status"> Status: </div>
+
+      <div class="other-users">
+         Users in Current Room: <div id="users_inlist"> </div>
+      </div>
+
+      <div class="other-container">
+         <div id="cur_room"> Current Room: Lobby </div>
+         Public Room List: <div id="rooms"></div>
+         Private Room List: <div id="privaterooms"></div>
+      </div>
+   </div>
+</body>
+</html>
