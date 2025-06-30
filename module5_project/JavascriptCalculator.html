@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+   <title>My Javascript Calculator</title>
+</head>
+<body>
+   Number 1:<input type="text" id="number1" name="number1"/>
+   Number 2:<input type="text" id="number2" name="number2"/> <br>
+   Select your operation:
+   <input type="radio" name="operation" value="+" id="+"/> <label for="+"> Plus </label>
+   <input type="radio" name="operation" value="-" id="-"/> <label for="-"> Minus </label>
+   <input type="radio" name="operation" value="*" id="*"/> <label for="*"> Multiply </label>
+   <input type="radio" name="operation" value="/" id="/"/> <label for="/"> Divide </label> <br>
+
+   <h2 id="result">Result: </h2>
+
+   <script>
+       function calculate() {
+           const num1Input = document.getElementById('number1');
+           const num2Input = document.getElementById('number2');
+           const operationSelect = document.getElementsByName("operation");
+           const operationResult = document.getElementById("result");
+
+           const num1 = parseFloat(num1Input.value) || 0;
+           const num2 = parseFloat(num2Input.value) || 0;
+           let operation;
+           for (var i = 0; i < operationSelect.length; i++) {
+               if (operationSelect[i].checked) {
+                   operation = operationSelect[i].value;
+                   break;
+               }
+           }
+           
+           let result;
+           switch (operation) {
+               case "+":
+                   result = num1 + num2;
+                   break;
+               case "-":
+                   result = num1 - num2;
+                   break;
+               case "*":
+                   result = num1 * num2;
+                   break;
+               case "/":
+                   if (num2 === 0) {
+                       alert("Error: You cannot divide by zero");
+                       return;
+                   } else {
+                       result = num1 / num2;
+                   }
+                   break;
+               default:
+                   result = "Select an operation";
+           }
+
+           operationResult.textContent = "Result: " + result;
+       }
+
+       document.getElementById('number1').addEventListener("input", calculate);
+       document.getElementById('number2').addEventListener("input", calculate);
+
+       const operationInputs = document.getElementsByName("operation");
+       for (var i = 0; i < operationInputs.length; i++) {
+           operationInputs[i].addEventListener("change", calculate);
+       }
+   </script>
+</body>
+</html>

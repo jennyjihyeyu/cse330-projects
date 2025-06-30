@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="weather.css" />
+    <title>Weather Widget App</title>
+</head>
+<body>
+    <div class="weather" id="weatherWidget">
+        <div class="weather-loc"></div>
+        <div class="weather-humidity"></div>
+        <div class="weather-temp"></div>
+        <img class="weather-tomorrow" />
+        <img class="weather-dayaftertomorrow" />
+    </div>
+    <button type="button" id="fetchWeather">Reload Weather</button>   
+    
+<script>
+function fetchWeather(){
+    fetch ("https://classes.engineering.wustl.edu/cse330/content/weather_json.php")
+    .then(response => response.json())
+    .then(weatherArray =>{
+        var location =weatherArray.location;
+        var humidity =weatherArray. atmosphere.humidity;
+        var curTemp =weatherArray. current.temp;
+        var tomorrow = weatherArray.tomorrow.code;
+        var dayafter = weatherArray.dayafter.code;
+        var weatherWidget = document.getElementById('weatherWidget').children;
+
+        weatherWidget[0].innerHTML ="<p><strong>"+location.city+"</strong>"+location.state + '</p>';
+        weatherWidget[1].innerHTML =humidity;
+        weatherWidget[2].innerHTML = curTemp;
+        weatherWidget[3].src ="http://us.yimg.com/i/us/nws/weather/gr/"+tomorrow+"ds.png";
+        weatherWidget[4].src = "http://us.yimg.com/i/us/nws/weather/gr/"+dayafter+"ds.png";
+    })
+}
+
+document.getElementById("fetchWeather").addEventListener("click", fetchWeather);
+
+document.addEventListener("DOMContentLoaded", fetchWeather, false);
+</script>
+</body>
+</html>
