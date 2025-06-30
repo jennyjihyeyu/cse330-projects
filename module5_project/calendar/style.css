@@ -1,0 +1,58 @@
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: Courier New, Georgia, 'Times New Roman', Arial;
+}
+
+table {
+    font-size: 15px;
+    border-collapse: collapse;
+    font-family: Courier New, Georgia, 'Times New Roman', Arial;
+}
+
+table th, table td {
+    width: 70px;
+    height: 50px;
+    text-align: center;
+    border: 1px solid #000;
+    font-family: Courier New, Georgia, 'Times New Roman', Arial;
+    background-color: beige;
+}
+
+button {
+    font-size: 13px;
+}
+
+form {
+    display: none;
+    text-align: center;
+}
+
+input {
+    margin: 10px;
+}
+
+#calendar button {
+    background-color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+    text-align: left;
+}
+
+#calendar button:hover {
+    background-color: #e0e0e0;
+}
+
+.button-container {
+    display: flex; 
+}
+
+.button-container button {
+    background-color: pink;
+    margin-right: 10px; 
+}
+
